@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+    <head>
+
+        <link rel="icon" href = "data:,">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css" />
+        <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+        <script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"></script>
+        <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+        <title>
+            Map
+        </title>
+    </head>
+    <body>
+
+        <div style="height: 400px;" id="mapid">
+        </div>
+
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<script>
+
+let cur_lat_lng;
+let final_lat_lng;
+
+var mymap = L.map('mapid').setView([50.27264, 7.26469], 13);
+L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png').addTo(mymap);
+
+// Continuous update of the location of the user
+mymap.locate({setView: true, watch: true, maxZoom: 17});
+
+// Post the location to the server, which the arrow client retrieves to update the arrow
+function postToServer(source, destination)
+    {
+            data = JSON.stringify({'current':source,
+                                'final':destination});
+            $.post('http://localhost:3000',data);
+            console.log(data);
+
+    }
+
+let sourceMarker;
+let sourceLat;
+let sourceLng;
+let destLat;
+let destLng;
+
+mymap.on('locationfound', function(ev){
+
+    console.log("Location was found");
+    sourceLat = ev.latlng.lat;
+    sourceLng = ev.latlng.lng;
+
+    cur_lat_lng = { sourceLat , sourceLng};
+
+    if (!sourceMarker) {
+    sourceMarker = L.marker(ev.latlng);
+        sourceMarker.addTo(mymap);
+
+    } else {
+        sourceMarker.setLatLng(ev.latlng);
+        sourceMarker.addTo(mymap);
+        source = ev.latlng;
+    }
+
+    // This is after it detects the destination on click, and then the source changes if we move.
+    if (destLat != null){
+
+        postToServer(cur_lat_lng, final_lat_lng);
+    }
+})
+
+let destinationMarker;
+
+mymap.on('click', function(e){
+
+    destinationMarker = L.marker([e.latlng.lat, e.latlng.lng]);
+    destLat = e.latlng.lat;
+    destLng = e.latlng.lng;
+    console.log(sourceLat);
+    console.log(sourceLng);
+    console.log(destLat);
+    console.log(destLng);
+    destinationMarker.addTo(mymap);
+
+  var control = L.Routing.control({
+  waypoints: [
+
+  L.latLng(sourceLat, sourceLng),
+    L.latLng(e.latlng.lat,e.latlng.lng)
+  ],
+  router: new L.Routing.osrmv1({
+    language: 'en',
+    profile: 'car'
+  }),
+}).addTo(mymap);
+
+final_lat_lng = { destLat, destLng};
+
+})
+
+</script>
+
+
+    </body>
+</html>

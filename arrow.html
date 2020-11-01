@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<style>
+
+* {
+    box-sizing: border-box;
+  }
+
+  .arrow{
+
+    height: 200px;
+    width: 200px;
+
+
+  }
+
+  .arrowdiv{
+  	width: 100px;
+	height: 100px;
+	
+	position: absolute;
+	top:0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+  	
+	margin: auto;
+  }
+  
+ 
+
+</style>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+</head>
+
+
+<body>
+
+  <div class = "arrowdiv">
+
+<img src="arrow_pic.png" class="arrow">
+
+</div>
+    
+
+    <script>
+let dataJSON;
+// The server has to send out the source and destination (which was just converted from a json to string)
+// To the arrow client, so that it can update the arrow accordingly
+function getFromServer(){
+    $.get('http://localhost:3000', function(data){
+
+    dataJSON = JSON.parse(data);
+    
+    let p2 = dataJSON.final;
+    let p1 = dataJSON.current;
+    console.log("Get s being called");
+    console.log(dataJSON);
+    console.log("something else");
+    let dLon = (p2.destLng - p1.sourceLng);
+    let y = Math.sin(dLon) * Math.cos(p2.destLat);
+    let x = Math.cos(p1.sourceLat) * Math.sin(p2.destLat) - Math.sin(p1.sourceLat)
+            * Math.cos(p2.destLat) * Math.cos(dLon);
+
+    let brng = Math.atan2(y, x);
+    console.log(brng);
+
+    brng = brng* (180/3.14159);
+    console.log(brng);
+
+    var deg = $(".arrow").data('rotate') || 0;
+    var rotate = 'rotate(' + brng + 'deg)';
+    $(".arrow").css({ 
+        '-webkit-transform': rotate,
+        '-moz-transform': rotate,
+        '-o-transform': rotate,
+        '-ms-transform': rotate,
+        'transform': rotate 
+
+    });
+    });
+}
+
+// See if the position is updated every 5 seconds, so that you can update the arrow accordingly.
+setInterval(getFromServer, 5000);
+
+    </script>
+
+</body>
+
+
+</html>
